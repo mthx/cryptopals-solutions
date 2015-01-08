@@ -20,7 +20,7 @@ function encryptXOR(plaintext, key) {
   var k = 0;
   for (var i = 0; i < plaintext.length; ++i) {
     result[i] = plaintext[i] ^ key[k];
-    k = k + 1 % key.length;
+    k = (k + 1) % key.length;
   }
   return result;
 }
@@ -59,6 +59,7 @@ function detectSingleByteXOR(callback) {
 }
 
 module.exports.fixedXOR = fixedXOR;
+module.exports.encryptXOR = encryptXOR
 module.exports.decryptSingleByteXOR = decryptSingleByteXOR;
 module.exports.detectSingleByteXOR = detectSingleByteXOR;
 

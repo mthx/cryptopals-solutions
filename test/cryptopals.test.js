@@ -42,4 +42,11 @@ describe("Set 1", function() {
       });
     });
   });
+  describe("Repeating key XOR", function() {
+    it("Should encrypt the sample plaintext to the given ciphertext", function() {
+      var input = Buffer("Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal", "ascii");
+      var expected = Buffer("0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f", "hex");
+      expectEqualBuffers(cryptopals.encryptXOR(input, new Buffer("ICE", "ascii")), expected);
+    });
+  });
 });
