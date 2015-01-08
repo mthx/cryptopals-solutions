@@ -11,9 +11,16 @@ function fixedXOR(buf1, buf2) {
   if (buf1.length != buf2.length) {
     throw new Error("Mismatched lengths");
   }
-  var result = Buffer(buf1.length);
-  for (var i = 0; i < buf1.length; ++i) {
-    result[i] = buf1[i] ^ buf2[i];
+  return encryptXOR(buf1, buf2);
+}
+
+
+function encryptXOR(plaintext, key) {
+  var result = Buffer(plaintext.length);
+  var k = 0;
+  for (var i = 0; i < plaintext.length; ++i) {
+    result[i] = plaintext[i] ^ key[k];
+    k = k + 1 % key.length;
   }
   return result;
 }
