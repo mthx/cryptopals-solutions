@@ -30,7 +30,7 @@ describe("Set 1", function() {
     it("Should decrypt to something believable", function() {
       var input = Buffer("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736", "hex")
       var expected = Buffer("Cooking MC's like a pound of bacon", "ascii");
-      expectEqualBuffers(cryptopals.decryptSingleByteXOR(input).decrypted, expected);
+      expectEqualBuffers(cryptopals.breakSingleByteXOR(input).decrypted, expected);
     });
   });
   describe("Detect single-byte XOR line", function() {

@@ -26,7 +26,7 @@ function encryptXOR(plaintext, key) {
 }
 
 
-function decryptSingleByteXOR(input) {
+function breakSingleByteXOR(input) {
   var best;
   var bestScore = -1;
   var key = new Buffer(input.length);
@@ -48,7 +48,7 @@ function detectSingleByteXOR(callback) {
   var rl = readline.createInterface(instream, outstream);
   var best = {"score": -1}; 
   rl.on("line", function(line) {
-    var result = decryptSingleByteXOR(new Buffer(line, "hex"));
+    var result = breakSingleByteXOR(new Buffer(line, "hex"));
     if (result.score > best.score) {
       best = result;
     }
@@ -60,6 +60,6 @@ function detectSingleByteXOR(callback) {
 
 module.exports.fixedXOR = fixedXOR;
 module.exports.encryptXOR = encryptXOR
-module.exports.decryptSingleByteXOR = decryptSingleByteXOR;
+module.exports.breakSingleByteXOR = breakSingleByteXOR;
 module.exports.detectSingleByteXOR = detectSingleByteXOR;
 
