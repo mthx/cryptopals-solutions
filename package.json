@@ -1,0 +1,10 @@
+{
+  "name": "cyrptopals-solutions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./src/cryptopals.js",
+  "scripts": {
+    "test": "mocha test"
+  },
+  "license": "ISC"
+}
