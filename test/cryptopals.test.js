@@ -49,4 +49,11 @@ describe("Set 1", function() {
       expectEqualBuffers(cryptopals.encryptXOR(input, new Buffer("ICE", "ascii")), expected);
     });
   });
+  describe("Break repeating-key XOR", function() {
+    it("Should calculate the sample hamming distance", function() {
+      var input = Buffer("this is a test", "ascii");
+      var expected = Buffer("wokka wokka!!!", "ascii");
+      expect(cryptopals.hammingDistance(input, expected)).to.equal(37);
+    });
+  });
 });
