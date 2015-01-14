@@ -14,6 +14,17 @@ function assertSameLength(a, b) {
 
 
 /**
+ * Reads and decodes a base 64 encoded file with optional line endings.
+ */
+function readBase64(file) {
+  // To work with Buffer's decoding we need to discard the line endings.
+  var text = fs.readFileSync(file, "ascii");
+  text = text.replace(/[\r\n]+/mg, "");
+  return new Buffer(text, "base64");
+}
+
+
+/**
  * Repeating key XOR encryption.
  *
  * @param plaintext The plaintext as a Buffer.
@@ -154,17 +165,6 @@ function detectSingleByteXOR(callback) {
     }
   });
   return best;
-}
-
-
-/**
- * Reads and decodes a base 64 encoded file with optional line endings.
- */
-function readBase64(file) {
-  // To work with Buffer's decoding we need to discard the line endings.
-  var text = fs.readFileSync(file, "ascii");
-  text = text.replace(/[\r\n]+/mg, "");
-  return new Buffer(text, "base64");
 }
 
 
