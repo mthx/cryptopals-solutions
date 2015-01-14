@@ -92,12 +92,17 @@ function guessKeySize(cryptotext, guesses) {
   for (var keysize = 2; keysize <= 40; ++keysize) {
     var b1 = cryptotext.slice(0, keysize);
     var b2 = cryptotext.slice(keysize, keysize * 2);
-    var normalizedDifference = hammingDistance(b1, b2) / keysize;
-    keysizeDifferences.push({keysize: keysize, difference: normalizedDifference});
+    var b3 = cryptotext.slice(keysize * 2, keysize * 3);
+    var b4 = cryptotext.slice(keysize * 3, keysize * 4);
+    var differences = hammingDistance(b1, b2) + hammingDistance(b1, b3) + hammingDistance(b1, b4) + hammingDistance(b2, b3) + hammingDistance(b3, b4);
+    differences = differences / keysize;
+    differences = differences / 4;
+    keysizeDifferences.push({keysize: keysize, difference: differences});
   }
   keysizeDifferences.sort(function(a, b) {
     return a.difference - b.difference;
   });
+  console.log(keysizeDifferences);
   return keysizeDifferences.map(function(e) { return e.keysize; }).slice(0, guesses);
 }
 
@@ -125,7 +130,7 @@ function breakRepeatingXOR() {
   cryptotext = cryptotext.replace(/[\r\n]+/mg, "");
   cryptotext = new Buffer(cryptotext, "base64");
   var result = {score: -1, decrypted: null, key: null};
-  guessKeySize(cryptotext, 20).forEach(function(keysize) {
+  guessKeySize(cryptotext, 3).forEach(function(keysize) {
     var key = new Buffer(keysize);
     var decrypted = Buffer(cryptotext.length);
     for (var k = 0; k < keysize; ++k) {
