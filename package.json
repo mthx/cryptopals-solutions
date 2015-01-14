@@ -1,9 +1,10 @@
 {
   "name": "cyrptopals-solutions",
   "version": "1.0.0",
-  "description": "",
+  "description": "My work-in progress solutions to http://cryptopals.com/ using node.js",
+  "repository": "https://github.com/mthx/cryptopals-solutions",
   "main": "./src/cryptopals.js",
   "scripts": {
-    "test": "mocha test"
+    "test": "mocha test -t 5000"
   }
 }
