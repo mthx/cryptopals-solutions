@@ -31,21 +31,27 @@ function encryptXOR(plaintext, key) {
 }
 
 
+function scoreEnglish(buf) {
+  return absDeltaSimilarity(byteFrequencies(buf), frequencies.ENGLISH_BYTES);
+}
+
+
 function breakSingleByteXOR(input) {
-  var best;
-  var bestScore = -1;
+  var result = {score: -1, result: null, key: null};
   var key = new Buffer(input.length);
   for (var b = 0; b < 256; ++b) {
     key.fill(b);
     var decrypted = fixedXOR(input, key);
-    var score = absDeltaSimilarity(byteFrequencies(decrypted), frequencies.ENGLISH_BYTES);
-    if (score > bestScore) {
-      best = decrypted;
-      bestScore = score;
+    var score = scoreEnglish(decrypted);
+    if (score > result.score) {
+      result.key = key[0];
+      result.decrypted = decrypted;
+      result.score = score;
     }
   }
-  return {"decrypted": best, "score": bestScore};
+  return result;
 }
+
 
 function detectSingleByteXOR(callback) {
   var instream = fs.createReadStream("data/4.txt");
@@ -63,6 +69,7 @@ function detectSingleByteXOR(callback) {
   });
 }
 
+
 function hammingDistance(buf1, buf2) {
   assertSameLength(buf1, buf2);
   var distance = 0;
@@ -79,14 +86,71 @@ function hammingDistance(buf1, buf2) {
   return distance;
 }
 
-function breakRepeatingXOR(callback) {
-  for (var keysize = 2; keysize <= 40; ++i) {
+
+function guessKeySize(cryptotext, guesses) {
+  var keysizeDifferences = [];
+  for (var keysize = 2; keysize <= 40; ++keysize) {
+    var b1 = cryptotext.slice(0, keysize);
+    var b2 = cryptotext.slice(keysize, keysize * 2);
+    var normalizedDifference = hammingDistance(b1, b2) / keysize;
+    keysizeDifferences.push({keysize: keysize, difference: normalizedDifference});
+  }
+  keysizeDifferences.sort(function(a, b) {
+    return a.difference - b.difference;
+  });
+  return keysizeDifferences.map(function(e) { return e.keysize; }).slice(0, guesses);
+}
+
+
+function everyNth(bufIn, start, spacing) {
+  var bufOut = Buffer(bufIn.length / spacing);
+  var j = 0;
+  for (var i = start; i < bufIn.length; i += spacing) {
+    bufOut[j++] = bufIn[i];
+  }
+  return bufOut.slice(0, j);
+}
+
+
+function spread(bufIn, bufOut, start, spacing) {
+  var j = 0;
+  for (var i = start; i < bufOut.length; i += spacing) {
+    bufOut[i] = bufIn[j++];
   }
 }
 
+
+function breakRepeatingXOR() {
+  var cryptotext = fs.readFileSync("data/6.txt", "ascii");
+  cryptotext = cryptotext.replace(/[\r\n]+/mg, "");
+  cryptotext = new Buffer(cryptotext, "base64");
+  var result = {score: -1, decrypted: null, key: null};
+  guessKeySize(cryptotext, 20).forEach(function(keysize) {
+    var key = new Buffer(keysize);
+    var decrypted = Buffer(cryptotext.length);
+    for (var k = 0; k < keysize; ++k) {
+      var kBuf = everyNth(cryptotext, k, keysize);
+      var kBufResult = breakSingleByteXOR(kBuf);
+      key[k] = kBufResult.key;
+      var kBufDecrypted = kBufResult.decrypted;
+      spread(kBufDecrypted, decrypted, k, keysize);
+    }
+    var score = scoreEnglish(decrypted);
+    if (score > result.score) {
+      result.decrypted = decrypted;
+      result.key = key;
+      result.score = score;
+    }
+  });
+  return result;
+}
+
+
+// Well this is nasty.  Automatable by copying in code?  But you'd have to invent a way to denote private stuff.
 module.exports.fixedXOR = fixedXOR;
 module.exports.encryptXOR = encryptXOR
 module.exports.breakSingleByteXOR = breakSingleByteXOR;
 module.exports.detectSingleByteXOR = detectSingleByteXOR;
 module.exports.hammingDistance = hammingDistance;
+module.exports.breakRepeatingXOR = breakRepeatingXOR;
 

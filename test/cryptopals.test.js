@@ -55,5 +55,9 @@ describe("Set 1", function() {
       var expected = Buffer("wokka wokka!!!", "ascii");
       expect(cryptopals.hammingDistance(input, expected)).to.equal(37);
     });
+    it("Should decrypt the cryptotext", function() {
+      var result = cryptopals.breakRepeatingXOR();
+      expectEqualBuffers(result.key, Buffer("Terminator X: Bring the noise", "ascii"));
+    });
   });
 });

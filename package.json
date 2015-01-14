@@ -5,6 +5,5 @@
   "main": "./src/cryptopals.js",
   "scripts": {
     "test": "mocha test"
-  },
-  "license": "ISC"
+  }
 }
