@@ -1,6 +1,5 @@
 var fs = require("fs");
-var readline = require("readline");
-var stream = require("stream");
+var Combinatorics = require("js-combinatorics").Combinatorics;
 
 var frequencies = require("./frequencies");
 var absDeltaSimilarity = frequencies.absDeltaSimilarity;
@@ -14,12 +13,13 @@ function assertSameLength(a, b) {
 }
 
 
-function fixedXOR(buf1, buf2) {
-  assertSameLength(buf1, buf2);
-  return encryptXOR(buf1, buf2);
-}
-
-
+/**
+ * Repeating key XOR encryption.
+ *
+ * @param plaintext The plaintext as a Buffer.
+ * @param key The key as a buffer.
+ * @return A new, encrypted, buffer.
+ */
 function encryptXOR(plaintext, key) {
   var result = Buffer(plaintext.length);
   var k = 0;
@@ -31,17 +31,25 @@ function encryptXOR(plaintext, key) {
 }
 
 
+/**
+ * Scores a buffer based on how english-like it is.  Higher is better.
+ */
 function scoreEnglish(buf) {
   return absDeltaSimilarity(byteFrequencies(buf), frequencies.ENGLISH_BYTES);
 }
 
 
+/**
+ * Exhaustively cracks single-byte XOR accepting the answer that most resembles English.
+ *
+ * @return Object with key, decrypted Buffer and score (English resemblence) properties.
+ */
 function breakSingleByteXOR(input) {
   var result = {score: -1, result: null, key: null};
-  var key = new Buffer(input.length);
   for (var b = 0; b < 256; ++b) {
-    key.fill(b);
-    var decrypted = fixedXOR(input, key);
+    var key = new Buffer(1);
+    key[0] = b;
+    var decrypted = encryptXOR(input, key);
     var score = scoreEnglish(decrypted);
     if (score > result.score) {
       result.key = key[0];
@@ -53,19 +61,9 @@ function breakSingleByteXOR(input) {
 }
 
 
-function detectSingleByteXOR(callback) {
-  var data = fs.readFileSync("data/4.txt", "ascii");
-  var best = {"score": -1}; 
-  data.split(/[\r\n]+/).forEach(function(line) {
-    var result = breakSingleByteXOR(new Buffer(line, "hex"));
-    if (result.score > best.score) {
-      best = result;
-    }
-  });
-  return best;
-}
-
-
+/**
+ * Calculates the hamming distance between two buffers.
+ */
 function hammingDistance(buf1, buf2) {
   assertSameLength(buf1, buf2);
   var distance = 0;
@@ -83,17 +81,25 @@ function hammingDistance(buf1, buf2) {
 }
 
 
-function guessKeySize(cryptotext, guesses) {
+/**
+ * Guesses XOR keysize based on hamming distance.
+ */
+function guessKeySize(cryptotext, min, max, guesses) {
+  if (min > max) {
+    throw new Error("min > max");
+  }
   var keysizeDifferences = [];
-  for (var keysize = 2; keysize <= 40; ++keysize) {
-    var b1 = cryptotext.slice(0, keysize);
-    var b2 = cryptotext.slice(keysize, keysize * 2);
-    var b3 = cryptotext.slice(keysize * 2, keysize * 3);
-    var b4 = cryptotext.slice(keysize * 3, keysize * 4);
-    var differences = hammingDistance(b1, b2) + hammingDistance(b1, b3) + hammingDistance(b1, b4) + hammingDistance(b2, b3) + hammingDistance(b3, b4);
-    differences = differences / keysize;
-    differences = differences / 4;
-    keysizeDifferences.push({keysize: keysize, difference: differences});
+  for (var keysize = min; keysize <= max; ++keysize) {
+    var chunks = Array(4);
+    for (var chunk = 0; chunk < chunks.length; ++chunk) {
+      chunks[chunk] = cryptotext.slice(chunk * keysize, (chunk + 1) * keysize);
+    }
+    var difference = 0;
+    Combinatorics.combination(chunks, 2).forEach(function(a) {
+      difference += hammingDistance(a[0], a[1]);
+    });
+    var normalizedDifference = difference / chunks.length / keysize;
+    keysizeDifferences.push({keysize: keysize, difference: normalizedDifference});
   }
   keysizeDifferences.sort(function(a, b) {
     return a.difference - b.difference;
@@ -102,6 +108,10 @@ function guessKeySize(cryptotext, guesses) {
 }
 
 
+/**
+ * Returns a new buffer containing every "spacing" byte from bufIn,
+ * starting at "start".
+ */
 function everyNth(bufIn, start, spacing) {
   var bufOut = Buffer(bufIn.length / spacing);
   var j = 0;
@@ -112,6 +122,9 @@ function everyNth(bufIn, start, spacing) {
 }
 
 
+/**
+ * Distributes bufIn over bufOut every "spacing" entries starting at "start". 
+ */
 function spread(bufIn, bufOut, start, spacing) {
   var j = 0;
   for (var i = start; i < bufOut.length; i += spacing) {
@@ -119,13 +132,49 @@ function spread(bufIn, bufOut, start, spacing) {
   }
 }
 
+/**
+ * Fixed key XOR for Set 1 Exercise 2.
+ */
+function fixedXOR(buf1, buf2) {
+  assertSameLength(buf1, buf2);
+  return encryptXOR(buf1, buf2);
+}
 
+
+/**
+ * Set 1 Exercise 4.
+ */
+function detectSingleByteXOR(callback) {
+  var data = fs.readFileSync("data/4.txt", "ascii");
+  var best = {"score": -1}; 
+  data.split(/[\r\n]+/).forEach(function(line) {
+    var result = breakSingleByteXOR(new Buffer(line, "hex"));
+    if (result.score > best.score) {
+      best = result;
+    }
+  });
+  return best;
+}
+
+
+/**
+ * Reads and decodes a base 64 encoded file with optional line endings.
+ */
+function readBase64(file) {
+  // To work with Buffer's decoding we need to discard the line endings.
+  var text = fs.readFileSync(file, "ascii");
+  text = text.replace(/[\r\n]+/mg, "");
+  return new Buffer(text, "base64");
+}
+
+
+/**
+ * Set 1 Exercise 6.
+ */
 function breakRepeatingXOR() {
-  var cryptotext = fs.readFileSync("data/6.txt", "ascii");
-  cryptotext = cryptotext.replace(/[\r\n]+/mg, "");
-  cryptotext = new Buffer(cryptotext, "base64");
+  var cryptotext = readBase64("data/6.txt");
   var result = {score: -1, decrypted: null, key: null};
-  guessKeySize(cryptotext, 3).forEach(function(keysize) {
+  guessKeySize(cryptotext, 2, 40, 3).forEach(function(keysize) {
     var key = new Buffer(keysize);
     var decrypted = Buffer(cryptotext.length);
     for (var k = 0; k < keysize; ++k) {
