@@ -34,12 +34,9 @@ describe("Set 1", function() {
     });
   });
   describe("Detect single-byte XOR line", function() {
-    it("Should decrypt to something believable", function(done) {
+    it("Should decrypt to something believable", function() {
       var expected = Buffer("Now that the party is jumping\n", "ascii");
-      cryptopals.detectSingleByteXOR(function(detected) {
-        expectEqualBuffers(detected.decrypted, expected);
-        done();
-      });
+      expectEqualBuffers(cryptopals.detectSingleByteXOR().decrypted, expected);
     });
   });
   describe("Repeating key XOR", function() {

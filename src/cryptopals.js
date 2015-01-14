@@ -54,19 +54,15 @@ function breakSingleByteXOR(input) {
 
 
 function detectSingleByteXOR(callback) {
-  var instream = fs.createReadStream("data/4.txt");
-  var outstream = new stream();
-  var rl = readline.createInterface(instream, outstream);
+  var data = fs.readFileSync("data/4.txt", "ascii");
   var best = {"score": -1}; 
-  rl.on("line", function(line) {
+  data.split(/[\r\n]+/).forEach(function(line) {
     var result = breakSingleByteXOR(new Buffer(line, "hex"));
     if (result.score > best.score) {
       best = result;
     }
   });
-  rl.on("close", function() {
-    callback(best);
-  });
+  return best;
 }
 
 
