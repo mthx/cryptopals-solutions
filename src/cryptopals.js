@@ -102,7 +102,6 @@ function guessKeySize(cryptotext, guesses) {
   keysizeDifferences.sort(function(a, b) {
     return a.difference - b.difference;
   });
-  console.log(keysizeDifferences);
   return keysizeDifferences.map(function(e) { return e.keysize; }).slice(0, guesses);
 }
 
