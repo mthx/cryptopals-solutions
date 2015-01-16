@@ -52,9 +52,14 @@ describe("Set 1", function() {
       var expected = Buffer("wokka wokka!!!", "ascii");
       expect(cryptopals.hammingDistance(input, expected)).to.equal(37);
     });
-    it("Should decrypt the cryptotext", function() {
+    it("Should find a believable key", function() {
       var result = cryptopals.breakRepeatingXOR();
       expectEqualBuffers(result.key, Buffer("Terminator X: Bring the noise", "ascii"));
+    });
+  });
+  describe("AES in ECB mode", function() {
+    it("Should decrypt to something believable", function() {
+      expect(cryptopals.decryptAESExample().toString("ascii")).to.match(/^I'm back and I'm ringin' the bell/);
     });
   });
 });

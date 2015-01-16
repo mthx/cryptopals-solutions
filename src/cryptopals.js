@@ -1,4 +1,5 @@
 var fs = require("fs");
+var crypto = require("crypto");
 var Combinatorics = require("js-combinatorics").Combinatorics;
 
 var frequencies = require("./frequencies");
@@ -194,6 +195,19 @@ function breakRepeatingXOR() {
   return result;
 }
 
+/**
+ * Set 1 Exercise 7.
+ */
+function decryptAESExample() {
+  // This should be equivalent to:
+  // $ openssl enc -aes-128-ecb -in data/7.txt -a -d -K "59454c4c4f57205355424d4152494e45" # Key just converted to hex.
+  var cryptotext = readBase64("data/7.txt");
+  var key = new Buffer("YELLOW SUBMARINE", "ascii");
+  console.log(crypto.getCiphers());
+  var decipher = crypto.createDecipher("aes-128-ecb", key);   
+  return Buffer.concat([decipher.update(cryptotext) , decipher.final()]);
+}
+
 
 // Well this is nasty.  Automatable by copying in code?  But you'd have to invent a way to denote private stuff.
 module.exports.fixedXOR = fixedXOR;
@@ -202,4 +216,5 @@ module.exports.breakSingleByteXOR = breakSingleByteXOR;
 module.exports.detectSingleByteXOR = detectSingleByteXOR;
 module.exports.hammingDistance = hammingDistance;
 module.exports.breakRepeatingXOR = breakRepeatingXOR;
+module.exports.decryptAESExample = decryptAESExample;
 
